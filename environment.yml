@@ -10,6 +10,7 @@ dependencies:
   - pytorch-gpu
   - torchvision
   - pytorch-cuda=12.4 # CHANGE ME: To CUDA version for your system
+  - requests
   - pip:
       - zennit==0.4.6
       - zennit-crp==0.6.0
