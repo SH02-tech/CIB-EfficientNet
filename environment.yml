@@ -1,0 +1,13 @@
+name: fcrp
+channels:
+  - defaults
+  - pytorch
+  - nvidia
+dependencies:
+  - pip>=24.2
+  - pytorch-gpu
+  - torchvision
+  - pytorch-cuda=12.4 # CHANGE ME: To CUDA version for your system
+  - pip:
+      - zennit==0.4.6
+      - zennit-crp==0.6.0
