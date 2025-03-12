@@ -69,9 +69,11 @@ def main():
 	set_seed(0)
 
 	model = xCRPEfficientNet()
+
+	model.eval()
 	output = model(torch.ones(1, 3, 224, 224))
 
-	print(output)
+	print(output[0, :10])
 	# print(model)
 
 	# modified_model = torch.nn.Sequential()
