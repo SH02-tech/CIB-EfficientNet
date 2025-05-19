@@ -1,19 +1,18 @@
 {
-    "name": "Mnist_LeNet",
+    "name": "fCRP",
     "n_gpu": 1,
 
     "arch": {
-        "type": "MnistModel",
-        "args": {}
+        "type": "fCRPEfficientNet",
+        "args": {
+            "num_classes": 7
+        }
     },
     "data_loader": {
-        "type": "MnistDataLoader",
-        "args":{
+        "type": "ISIC2018DataLoader",
+        "args": {
             "data_dir": "data/",
-            "batch_size": 128,
-            "shuffle": true,
-            "validation_split": 0.1,
-            "num_workers": 2
+            "batch_size": 32
         }
     },
     "optimizer": {
