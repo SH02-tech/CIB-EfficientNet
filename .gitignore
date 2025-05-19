@@ -173,3 +173,12 @@ cython_debug/
 # tmp files
 
 *tmp/
+
+# aux files
+data/
+saved/
+checkpoints/
+tutorials/
+
+# config files
+.vscode/
