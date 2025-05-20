@@ -3,5 +3,7 @@ torchvision
 numpy
 tqdm
 tensorboard
-pandas
+zennit
 zennit-crp
+matplotlib
+jupyter
