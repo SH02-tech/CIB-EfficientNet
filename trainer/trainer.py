@@ -3,7 +3,7 @@ import torch
 from torchvision.utils import make_grid
 from base import BaseTrainer
 from utils import inf_loop, MetricTracker
-
+from tqdm import tqdm
 
 class Trainer(BaseTrainer):
     """
@@ -82,7 +82,7 @@ class Trainer(BaseTrainer):
         self.model.eval()
         self.valid_metrics.reset()
         with torch.no_grad():
-            for batch_idx, (data, target) in enumerate(self.valid_data_loader):
+            for batch_idx, (data, target) in tqdm(enumerate(self.valid_data_loader), total=len(self.valid_data_loader), desc="Validation"):
                 data, target = data.to(self.device), target.to(self.device)
 
                 output = self.model(data)
