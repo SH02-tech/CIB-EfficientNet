@@ -79,3 +79,69 @@ class ISIC2018DataLoader(BaseDataLoader):
         self.data_dir = data_dir
         self.dataset = ISIC2018Dataset(self.data_dir, split)
         super().__init__(self.dataset, batch_size, shuffle, validation_split, num_workers)
+
+class JacobMedDataset(Dataset):
+    """
+    JacobMed data loading
+    """
+    def __init__(self, data_dir, split:str = 'train', reduced_set = False):
+        # attributes
+        self.data_files = []
+        self.data_dict = {}
+        self.transforms = None
+
+        with open(os.path.join(data_dir, 'classes.txt'), 'r') as f:
+            classes = f.readlines()
+            self.data_dict = {x.strip(): idx for idx, x in enumerate(classes)}
+
+        # get data, depending on split
+        split_data = os.path.join(data_dir, split)
+
+        # get all data files
+        for field in self.data_dict.keys():
+            field_dir = os.path.join(split_data, field)
+            new_data_files = []
+            for file in os.listdir(field_dir):
+                if file.endswith('.png'):
+                    new_data_files.append(os.path.join(field_dir, file))
+            if not reduced_set:
+                self.data_files.extend(new_data_files)
+            else:
+                # only add 10% of the data of the subfield
+                self.data_files.extend(new_data_files[:int(len(new_data_files) * 0.1)])
+
+        self.data_files.sort()
+
+        IDENTITY = transforms.Lambda(lambda x: x)
+
+        self.transforms = transforms.Compose([
+            transforms.RandomAffine(degrees=360, shear=15) if split == 'train' else IDENTITY,
+            transforms.Resize(size=374),
+            transforms.CenterCrop(size=374),
+            transforms.RandomResizedCrop(size=299, scale=(0.8, 1.0), ratio=(1.0, 1.0)) if split == 'train' else IDENTITY,
+            transforms.RandomHorizontalFlip() if split == 'train' else IDENTITY,
+            transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.1) if split == 'train' else IDENTITY,
+            transforms.Lambda(lambda x: x / 255.0),
+            transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+        ])
+
+    def __len__(self):
+        return len(self.data_files)
+    
+    def __getitem__(self, idx):
+        img_name = self.data_files[idx]
+        image = read_image(img_name)
+        label = os.path.basename(os.path.dirname(img_name))
+        target_class = self.data_dict[label]
+        image = self.transforms(image)
+        return image, target_class
+
+
+class JacobMedDataLoader(BaseDataLoader):
+    """
+    JacobMed data loading demo using BaseDataLoader
+    """
+    def __init__(self, data_dir, split, reduced_set=False, batch_size=4, shuffle=True, validation_split=0.0, num_workers=1):
+        self.data_dir = data_dir
+        self.dataset = JacobMedDataset(self.data_dir, split=split, reduced_set=reduced_set)
+        super().__init__(self.dataset, batch_size, shuffle, validation_split, num_workers)
