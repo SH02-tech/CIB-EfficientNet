@@ -12,12 +12,7 @@ def main(config):
     logger = config.get_logger('test')
 
     # setup data_loader instances
-    data_loader = getattr(module_data, config['data_loader']['type'])(
-        config['data_loader']['args']['data_dir'],
-        split='test',
-        batch_size=config['data_loader']['args']['batch_size'],
-        shuffle=True
-    )
+    data_loader = config.init_obj('data_loader_test', module_data)
 
     # build model architecture
     model = config.init_obj('arch', module_arch)
