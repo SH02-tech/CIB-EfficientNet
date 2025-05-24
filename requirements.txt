@@ -7,3 +7,4 @@ zennit
 zennit-crp
 matplotlib
 jupyter
+scipy
