@@ -89,6 +89,8 @@ class JacobMedDataset(Dataset):
         self.data_files = []
         self.data_dict = {}
         self.transforms = None
+        self.normalize_mean = [0.5, 0.5, 0.5]
+        self.normalize_std = [0.5, 0.5, 0.5]
 
         with open(os.path.join(data_dir, 'classes.txt'), 'r') as f:
             classes = f.readlines()
@@ -122,7 +124,7 @@ class JacobMedDataset(Dataset):
             transforms.RandomHorizontalFlip() if split == 'train' else IDENTITY,
             transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.1) if split == 'train' else IDENTITY,
             transforms.Lambda(lambda x: x / 255.0),
-            transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+            transforms.Normalize(mean=self.normalize_mean, std=self.normalize_std)
         ])
 
     def __len__(self):
