@@ -48,7 +48,7 @@ class xMIEfficientNet(BaseModel):
         pre_classifier[-1] = nn.Linear(n_mi_layer, num_classes)
         self.classifier = pre_classifier
 
-    def forward(self, x):
+    def forward(self, x, output_features=False):
         # from EfficientNet
         x = self.features(x)
         x = self.avgpool(x)
@@ -61,4 +61,7 @@ class xMIEfficientNet(BaseModel):
         # Classifier
         x = self.classifier(x)
 
-        return F.log_softmax(x, dim=1), inter_features
+        if output_features:
+            return F.log_softmax(x, dim=1), inter_features
+        else:
+            return F.log_softmax(x, dim=1)

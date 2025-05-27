@@ -1,3 +1,4 @@
+import torch
 import torch.nn.functional as F
 import torch.nn as nn
 
@@ -18,14 +19,29 @@ def kl_loss(features):
 
     return loss
 
+def cov_loss(features):
+    batch_size = features.shape[0]
+    
+    mean_features = torch.mean(features, dim=0, keepdim=True)
+    center_features = features - mean_features
+
+    cov = torch.matmul(center_features.T, center_features) / batch_size
+
+    id_matrix = torch.eye(cov.size(0), device = cov.device)
+
+    decorr_loss = torch.norm(cov - id_matrix, p=2) ** 2
+
+    return decorr_loss
+
 class XMILoss(nn.Module):
     """
     Mutual Information loss function
     """
-    def __init__(self, w_entropy: float = 1.0, w_mi: float = 0.2):
+    def __init__(self, w_entropy: float = 1.0, w_mi: float = 0.2, w_cov: float = 0.2):
         super(XMILoss, self).__init__()
         self.w_entropy = w_entropy
         self.w_mi = w_mi
+        self.w_cov = w_cov
 
     def forward(self, output, target, features):
         """
@@ -36,12 +52,14 @@ class XMILoss(nn.Module):
         """
         loss_nll = nll_loss(output, target)
         loss_kl  = kl_loss(features)
+        loss_cov = cov_loss(features)
 
-        loss = self.w_entropy * loss_nll + self.w_mi * loss_kl
+        loss = self.w_entropy * loss_nll + self.w_mi * loss_kl + self.w_cov * loss_cov
 
         info_dict = {
             "nll_loss": loss_nll,
             "kl_loss": loss_kl,
+            "cov_loss": loss_cov,
             # "loss": loss
         }
 
