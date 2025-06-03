@@ -11,14 +11,20 @@ class fCRPEfficientNet(BaseModel):
         super(fCRPEfficientNet, self).__init__()
 
         imagenet_weights = EfficientNet_B2_Weights.DEFAULT if imagenet_weights else None
-        self.model = EfficientNetB2(weights=imagenet_weights)
+        model = EfficientNetB2(weights=imagenet_weights)
 
-        classifier = self.model.classifier
+        self.features = model.features
+        self.avgpool = model.avgpool
+
+        classifier = model.classifier
         classifier[-1] = nn.Linear(classifier[-1].in_features, num_classes) # change the last layer
-        self.model.classifier = classifier
+        self.classifier = classifier
 
     def forward(self, x):
-        x = self.model(x)
+        x = self.features(x)
+        x = self.avgpool(x)
+        x = torch.flatten(x, 1)
+        x = self.classifier(x)
         return F.log_softmax(x, dim=1)
 
 class xMIEfficientNet(BaseModel):
@@ -35,11 +41,11 @@ class xMIEfficientNet(BaseModel):
             pre_model.load_state_dict(pre_state_dict)
 
         # get necessary layer sizes
-        pre_classifier = pre_model.model.classifier
+        pre_classifier = pre_model.classifier
         last_features_size = pre_classifier[-1].in_features
 
-        self.features = pre_model.model.features
-        self.avgpool = pre_model.model.avgpool
+        self.features = pre_model.features
+        self.avgpool = pre_model.avgpool
         self.mi_layer = nn.Sequential(
             nn.Dropout(p=0.3, inplace=True),
             nn.Linear(last_features_size, n_mi_layer),
@@ -62,6 +68,6 @@ class xMIEfficientNet(BaseModel):
         x = self.classifier(x)
 
         if output_features:
-            return F.log_softmax(x, dim=1), inter_features
+            return F.log_softmax(x, dim=1), self.mi_layer[-1].weight, inter_features
         else:
             return F.log_softmax(x, dim=1)
