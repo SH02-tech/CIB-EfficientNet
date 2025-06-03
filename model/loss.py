@@ -25,7 +25,7 @@ def kl_loss(features):
             source_channel = log_features[:,i]
             target_channel = log_features[:,j]
 
-            loss = loss + F.kl_div(source_channel, target_channel, log_target = True, reduction='batchmean')
+            loss = loss + F.kl_div(source_channel, target_channel, log_target = True)
 
     return loss
 
