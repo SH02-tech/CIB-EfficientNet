@@ -109,8 +109,9 @@ class JacobMedDataset(Dataset):
             if not reduced_set:
                 self.data_files.extend(new_data_files)
             else:
-                # only add 10% of the data of the subfield
-                self.data_files.extend(new_data_files[:int(len(new_data_files) * 0.1)])
+                # add subst of data files
+                num_elems = 300 if split == 'train' else 20
+                self.data_files.extend(new_data_files[:num_elems])
 
         self.data_files.sort()
 
