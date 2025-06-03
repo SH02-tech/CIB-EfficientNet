@@ -2,8 +2,18 @@ import torch
 import torch.nn.functional as F
 import torch.nn as nn
 
-def nll_loss(output, target):
-    return F.nll_loss(output, target)
+class NLLLoss(nn.Module):
+    """
+    Negative Log Likelihood loss function
+    """
+    def __init__(self):
+        super(NLLLoss, self).__init__()
+
+    def forward(self, output, target):
+        """
+        Number of input parameters done for consistency.
+        """
+        return F.nll_loss(output, target)
 
 def kl_loss(features):
     loss = 0
@@ -15,14 +25,14 @@ def kl_loss(features):
             source_channel = log_features[:,i]
             target_channel = log_features[:,j]
 
-            loss = loss + F.kl_div(source_channel, target_channel, log_target = True)
+            loss = loss + F.kl_div(source_channel, target_channel, log_target = True, reduction='batchmean')
 
     return loss
 
 def cov_loss(features):
     batch_size = features.shape[0]
     
-    mean_features = torch.mean(features, dim=0, keepdim=True)
+    mean_features = torch.mean(features, dim=-1, keepdim=True)
     center_features = features - mean_features
 
     cov = torch.matmul(center_features.T, center_features) / batch_size
@@ -33,33 +43,53 @@ def cov_loss(features):
 
     return decorr_loss
 
+def l1_loss(features):
+    return torch.norm(features, p=1)
+
+# def ortho_loss(weights):
+#     loss = 0
+#     num_channels = int(weights.shape[1])
+
+#     for i in range(num_channels):
+#         for j in range(i+1, num_channels):
+#             first_weights = weights[:,i]
+#             second_weights = weights[:,j]
+
+#             loss = loss + F.cosine_similarity(first_weights, second_weights, dim = 0)
+
+#     return loss
+
 class XMILoss(nn.Module):
     """
     Mutual Information loss function
     """
-    def __init__(self, w_entropy: float = 1.0, w_mi: float = 0.2, w_cov: float = 0.2):
+    def __init__(self, w_entropy: float = 1.0, w_mi: float = 0.2, w_cov: float = 0.2, w_l1: float = 0.1):
         super(XMILoss, self).__init__()
         self.w_entropy = w_entropy
         self.w_mi = w_mi
         self.w_cov = w_cov
+        self.w_l1 = w_l1
 
-    def forward(self, output, target, features):
+    def forward(self, output, target, mi_layer_weights, features):
         """
         Number of input parameters done for consistency.
 
         output. pair of (hotmap_predictions, features)
         target. target hotmap_gt
         """
-        loss_nll = nll_loss(output, target)
+        loss_nll = F.nll_loss(output, target)
         loss_kl  = kl_loss(features)
         loss_cov = cov_loss(features)
+        loss_l1 = l1_loss(mi_layer_weights)
 
-        loss = self.w_entropy * loss_nll + self.w_mi * loss_kl + self.w_cov * loss_cov
+        loss = self.w_entropy * loss_nll + self.w_mi * loss_kl + \
+            self.w_cov * loss_cov + self.w_l1 * loss_l1
 
         info_dict = {
             "nll_loss": loss_nll,
             "kl_loss": loss_kl,
             "cov_loss": loss_cov,
+            "l1_loss": loss_l1
             # "loss": loss
         }
 
