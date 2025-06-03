@@ -52,8 +52,8 @@
         "type": "XMILoss",
         "args": {
             "w_entropy": 1.0,
-            "w_mi": 0.8,
-            "w_cov": 0,
+            "w_mi": 0,
+            "w_cov": 0.8,
             "w_l1": 0
         }
     },
