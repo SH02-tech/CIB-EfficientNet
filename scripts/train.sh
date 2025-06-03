@@ -29,4 +29,4 @@ Fecha: $(date)
 
 python train.py $*
 
-/mnt/homeGPU/sjhu/scripts/slack_notifier.sh "$HEADER completado. Estado: $?"
+/mnt/homeGPU/sjhu/scripts/slack_notifier.sh "$HEADER completado. Estado: $?. +info en: /mnt/homeGPU/sjhu/buffer/slurm_logs/job-$SLURM_JOB_ID.log"
