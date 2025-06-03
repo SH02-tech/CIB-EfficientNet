@@ -98,7 +98,8 @@ if __name__ == '__main__':
         CustomArgs(['--w_entropy', '--weight_entropy'], type=float, target='loss;args;w_entropy'),
         CustomArgs(['--w_mi', '--weight_mi'], type=float, target='loss;args;w_mi'),
         CustomArgs(['--w_cov', '--weight_cov'], type=float, target='loss;args;w_cov'),
-        CustomArgs(['--w_l1', '--weight_l1'], type=float, target='loss;args;w_l1')
+        CustomArgs(['--w_l1', '--weight_l1'], type=float, target='loss;args;w_l1'),
+        CustomArgs(['--w_l2', '--weight_l2'], type=float, target='loss;args;w_l2')
     ]
     config = ConfigParser.from_args(args, options)
     main(config)
