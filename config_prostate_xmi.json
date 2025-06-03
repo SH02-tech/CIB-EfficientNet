@@ -7,7 +7,7 @@
         "args": {
             "num_classes": 14,
             "n_mi_layer": 50,
-            "fcrp_weights": "checkpoints/JacobEfficientNet/model_best.pth"
+            "fcrp_weights": "saved/models/fCRP-prostate/0602_213033/model_best.pth"
         }
     },
     "data_loader_train": {
@@ -34,7 +34,7 @@
         "type": "JacobMedDataLoader",
         "args": {
             "data_dir": "data/JacobMed",
-            "split": "val",
+            "split": "test",
             "reduced_set": true,
             "batch_size": 32,
             "num_workers": 4
@@ -52,7 +52,9 @@
         "type": "XMILoss",
         "args": {
             "w_entropy": 1.0,
-            "w_mi": 0.2
+            "w_mi": 0.8,
+            "w_cov": 0,
+            "w_l1": 0
         }
     },
     "metrics": [
@@ -74,7 +76,7 @@
         "verbosity": 2,
         
         "monitor": "min val_loss",
-        "early_stop": 10,
+        "early_stop": 5,
 
         "tensorboard": true
     }

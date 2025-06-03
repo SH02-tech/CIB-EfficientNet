@@ -4,8 +4,12 @@
 
     "arch": {
         "type": "fCRPEfficientNet",
+        "pretrained": {
+            "reduce_factor": 1
+        },
         "args": {
-            "num_classes": 14
+            "num_classes": 14,
+            "imagenet_weights": true
         }
     },
     "data_loader_train": {
@@ -32,7 +36,7 @@
         "type": "JacobMedDataLoader",
         "args": {
             "data_dir": "data/JacobMed",
-            "split": "val",
+            "split": "test",
             "reduced_set": true,
             "batch_size": 32,
             "num_workers": 4
@@ -46,7 +50,10 @@
             "amsgrad": true
         }
     },
-    "loss": "nll_loss",
+    "loss": {
+        "type": "NLLLoss",
+        "args": {}
+    },
     "metrics": [
         "accuracy", "top_k_acc"
     ],
@@ -65,7 +72,7 @@
         "verbosity": 2,
         
         "monitor": "min val_loss",
-        "early_stop": 10,
+        "early_stop": 5,
 
         "tensorboard": true
     }
