@@ -131,7 +131,7 @@ class TrainerXMI(BaseTrainer):
         self.lr_scheduler = lr_scheduler
         self.log_step = int(np.sqrt(data_loader.batch_size))
 
-        sub_losses = [f'loss/{key}' for key in ['nll_loss', 'kl_loss', 'cov_loss']]
+        sub_losses = [f'loss/{key}' for key in ['nll_loss', 'kl_loss', 'cov_loss', 'l1_loss']] # TBD: menos rudimentario
 
         self.train_metrics = MetricTracker('loss', *sub_losses, *[m.__name__ for m in self.metric_ftns], writer=self.writer)
         self.valid_metrics = MetricTracker('loss', *sub_losses, *[m.__name__ for m in self.metric_ftns], writer=self.writer)
@@ -150,8 +150,8 @@ class TrainerXMI(BaseTrainer):
             data, target = data.to(self.device), target.to(self.device)
 
             self.optimizer.zero_grad()
-            output, features = self.model(data, output_features = True)
-            loss, info_dict = self.criterion(output, target, features)
+            output, mi_layer_weights, features = self.model(data, output_features = True)
+            loss, info_dict = self.criterion(output, target, mi_layer_weights, features)
             loss.backward()
             self.optimizer.step()
 
@@ -199,8 +199,8 @@ class TrainerXMI(BaseTrainer):
             for batch_idx, (data, target) in tqdm(enumerate(self.valid_data_loader), total=len(self.valid_data_loader), desc="Validation"):
                 data, target = data.to(self.device), target.to(self.device)
 
-                output, features = self.model(data, output_features=True)
-                loss, info_dict = self.criterion(output, target, features)
+                output, mi_layer_weights, features = self.model(data, output_features=True)
+                loss, info_dict = self.criterion(output, target, mi_layer_weights, features)
 
                 self.writer.set_step((epoch - 1) * len(self.valid_data_loader) + batch_idx, 'valid')
 
