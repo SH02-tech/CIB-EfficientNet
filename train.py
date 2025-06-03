@@ -40,12 +40,29 @@ def main(config):
     metrics = [getattr(module_metric, met) for met in config['metrics']]
 
     # build optimizer, learning rate scheduler. delete every lines containing lr_scheduler for disabling scheduler
-    trainable_params = filter(lambda p: p.requires_grad, model.parameters())
-    optimizer = config.init_obj('optimizer', torch.optim, trainable_params)
+    if config['arch'].get('pretrained', False):
+        efficient_weights = filter(
+            lambda p: p.requires_grad and not any(n.startswith('classifier') for n, param in model.named_parameters() if param is p),
+            model.parameters()
+        )
+        classifier_weights = filter(
+            lambda p: p.requires_grad and any(n.startswith('classifier') for n, param in model.named_parameters() if param is p),
+            model.parameters()
+        )
+
+        dict_weights_optimization = [
+            {'params': efficient_weights, 'lr': config['optimizer']['args']['lr'] * config['arch']['pretrained']['reduce_factor']},
+            {'params': classifier_weights, 'lr': config['optimizer']['args']['lr']}
+        ]
+
+        optimizer = config.init_obj('optimizer', torch.optim, dict_weights_optimization)
+    else:
+        trainable_params = filter(lambda p: p.requires_grad, model.parameters())
+        optimizer = config.init_obj('optimizer', torch.optim, trainable_params)
+
     lr_scheduler = config.init_obj('lr_scheduler', torch.optim.lr_scheduler, optimizer)
 
-
-    if config['trainer']['loss_type'] == 'multiloss':
+    if config['trainer'].get('loss_type', '') == 'multiloss':
         trainer = TrainerXMI(model, criterion, metrics, optimizer,
                         config=config,
                         device=device,
@@ -76,6 +93,7 @@ if __name__ == '__main__':
     CustomArgs = collections.namedtuple('CustomArgs', 'flags type target')
     options = [
         CustomArgs(['--lr', '--learning_rate'], type=float, target='optimizer;args;lr'),
+        CustomArgs(['--rf', '--reduce_factor'], type=float, target='arch;pretrained;reduce_factor'),
         CustomArgs(['--bs', '--batch_size'], type=int, target='data_loader;args;batch_size')
     ]
     config = ConfigParser.from_args(args, options)
