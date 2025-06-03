@@ -45,6 +45,9 @@ def cov_loss(features):
 def l1_loss(features):
     return torch.norm(features, p=1)
 
+def l2_loss(features):
+    return torch.norm(features, p=2)
+
 # def ortho_loss(weights):
 #     loss = 0
 #     num_channels = int(weights.shape[1])
@@ -62,12 +65,13 @@ class XMILoss(nn.Module):
     """
     Mutual Information loss function
     """
-    def __init__(self, w_entropy: float = 1.0, w_mi: float = 0.2, w_cov: float = 0.2, w_l1: float = 0.1):
+    def __init__(self, w_entropy: float = 1.0, w_mi: float = 0.2, w_cov: float = 0.2, w_l1: float = 0.1, w_l2: float = 0.1):
         super(XMILoss, self).__init__()
         self.w_entropy = w_entropy
         self.w_mi = w_mi
         self.w_cov = w_cov
         self.w_l1 = w_l1
+        self.w_l2 = w_l2
 
     def forward(self, output, target, mi_layer_weights, features):
         """
@@ -80,15 +84,17 @@ class XMILoss(nn.Module):
         loss_kl  = kl_loss(features)
         loss_cov = cov_loss(features)
         loss_l1 = l1_loss(mi_layer_weights)
+        loss_l2 = l2_loss(mi_layer_weights)
 
         loss = self.w_entropy * loss_nll + self.w_mi * loss_kl + \
-            self.w_cov * loss_cov + self.w_l1 * loss_l1
+            self.w_cov * loss_cov + self.w_l1 * loss_l1 + self.w_l2 * loss_l2
 
         info_dict = {
             "nll_loss": loss_nll,
             "kl_loss": loss_kl,
             "cov_loss": loss_cov,
-            "l1_loss": loss_l1
+            "l1_loss": loss_l1,
+            "l2_loss": loss_l2
             # "loss": loss
         }
 
