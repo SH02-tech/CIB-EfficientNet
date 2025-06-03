@@ -31,8 +31,7 @@ def kl_loss(features):
 
 def cov_loss(features):
     batch_size = features.shape[0]
-    
-    mean_features = torch.mean(features, dim=-1, keepdim=True)
+    mean_features = torch.mean(features, dim=0, keepdim=True)
     center_features = features - mean_features
 
     cov = torch.matmul(center_features.T, center_features) / batch_size
