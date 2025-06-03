@@ -94,7 +94,11 @@ if __name__ == '__main__':
     options = [
         CustomArgs(['--lr', '--learning_rate'], type=float, target='optimizer;args;lr'),
         CustomArgs(['--rf', '--reduce_factor'], type=float, target='arch;pretrained;reduce_factor'),
-        CustomArgs(['--bs', '--batch_size'], type=int, target='data_loader;args;batch_size')
+        CustomArgs(['--bs', '--batch_size'], type=int, target='data_loader;args;batch_size'),
+        CustomArgs(['--w_entropy', '--weight_entropy'], type=float, target='loss;args;w_entropy'),
+        CustomArgs(['--w_mi', '--weight_mi'], type=float, target='loss;args;w_mi'),
+        CustomArgs(['--w_cov', '--weight_cov'], type=float, target='loss;args;w_cov'),
+        CustomArgs(['--w_l1', '--weight_l1'], type=float, target='loss;args;w_l1')
     ]
     config = ConfigParser.from_args(args, options)
     main(config)
