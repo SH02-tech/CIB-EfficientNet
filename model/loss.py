@@ -62,6 +62,9 @@ def l2_loss(features):
 #     return loss
 
 def ortho_loss(weights, type="row"):
+    if  len(weights.shape) > 2: # weights from CNN layer
+        weights = weights.view(weights.size(0), -1)
+
     cov = torch.matmul(weights, weights.T) if type == "row" else torch.matmul(weights.T, weights)
     id_matrix = torch.eye(cov.size(0), device=cov.device)
     loss = torch.norm(cov - id_matrix, p=2) ** 2
@@ -89,24 +92,21 @@ class XMILoss(nn.Module):
         target. target hotmap_gt
         """
         loss_nll = F.nll_loss(output, target)
-        loss_kl  = kl_loss(features)
         loss_cov = cov_loss(features)
-        loss_ortho = ortho_loss(mi_layer_weights,  type="column")
+        loss_ortho = ortho_loss(mi_layer_weights,  type="row")
         loss_l1 = l1_loss(mi_layer_weights)
         loss_l2 = l2_loss(mi_layer_weights)
 
-        loss = self.w_entropy * loss_nll + self.w_mi * loss_kl + \
+        loss = self.w_entropy * loss_nll + \
             self.w_cov * loss_cov + self.w_ortho * loss_ortho + \
             self.w_l1 * loss_l1 + self.w_l2 * loss_l2
 
         info_dict = {
             "nll_loss": loss_nll,
-            "kl_loss": loss_kl,
             "cov_loss": loss_cov,
             "ortho_loss": loss_ortho,
             "l1_loss": loss_l1,
             "l2_loss": loss_l2
-            # "loss": loss
         }
 
         return loss, info_dict

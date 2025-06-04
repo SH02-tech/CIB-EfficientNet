@@ -131,7 +131,7 @@ class TrainerXMI(BaseTrainer):
         self.lr_scheduler = lr_scheduler
         self.log_step = int(np.sqrt(data_loader.batch_size))
 
-        sub_losses = [f'loss/{key}' for key in ['nll_loss', 'kl_loss', 'ortho_loss', 'cov_loss', 'l1_loss', 'l2_loss']] # TBD: menos rudimentario
+        sub_losses = [f'loss/{key}' for key in ['nll_loss', 'ortho_loss', 'cov_loss', 'l1_loss', 'l2_loss']] # TBD: menos rudimentario
 
         self.train_metrics = MetricTracker('loss', *sub_losses, *[m.__name__ for m in self.metric_ftns], writer=self.writer)
         self.valid_metrics = MetricTracker('loss', *sub_losses, *[m.__name__ for m in self.metric_ftns], writer=self.writer)

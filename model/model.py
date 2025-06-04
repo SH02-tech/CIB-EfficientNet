@@ -28,7 +28,7 @@ class fCRPEfficientNet(BaseModel):
         return F.log_softmax(x, dim=1)
 
 class xMIEfficientNet(BaseModel):
-    def __init__(self, num_classes=7, n_mi_layer = 30, fcrp_weights: str = None):
+    def __init__(self, num_classes=7, n_mi_layer = 0, fcrp_weights: str = None):
         super(xMIEfficientNet, self).__init__()
 
         # Previous model
@@ -46,12 +46,17 @@ class xMIEfficientNet(BaseModel):
 
         self.features = pre_model.features
         self.avgpool = pre_model.avgpool
-        self.mi_layer = nn.Sequential(
-            nn.Dropout(p=0.3, inplace=True),
-            nn.Linear(last_features_size, n_mi_layer),
-        )
-        
-        pre_classifier[-1] = nn.Linear(n_mi_layer, num_classes)
+
+        if n_mi_layer > 0:
+            self.mi_layer = nn.Sequential(
+                nn.Dropout(p=0.3, inplace=True),
+                nn.Linear(last_features_size, n_mi_layer),
+            )
+
+            pre_classifier[-1] = nn.Linear(n_mi_layer, num_classes)
+        else:
+            self.mi_layer = None
+
         self.classifier = pre_classifier
 
     def forward(self, x, output_features=False):
@@ -61,13 +66,17 @@ class xMIEfficientNet(BaseModel):
         x = torch.flatten(x, 1)
 
         # MI layer
-        x = self.mi_layer(x)
+
+        if self.mi_layer is not None:
+            x = self.mi_layer(x)
+
         inter_features = x
 
         # Classifier
         x = self.classifier(x)
 
         if output_features:
-            return F.log_softmax(x, dim=1), self.mi_layer[-1].weight, inter_features
+            weights = self.mi_layer[-1].weight if self.mi_layer is not None else self.features[-1][0].weight
+            return F.log_softmax(x, dim=1), weights, inter_features
         else:
             return F.log_softmax(x, dim=1)
