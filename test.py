@@ -35,26 +35,44 @@ def main(config):
     model.eval()
 
     total_loss = 0.0
+    individual_losses = {}
     total_metrics = torch.zeros(len(metric_fns))
 
     with torch.no_grad():
         for i, (data, target) in enumerate(tqdm(data_loader)):
             data, target = data.to(device), target.to(device)
-            output, mi_layer_weights, features  = model(data, output_features=True)
+
+            if config['arch']['type'] == 'xMIEfficientNet':
+                output, mi_layer_weights, features  = model(data, output_features=True)
+            else:
+                output = model(data)
 
             #
             # save sample images, or do something with output here
             #
 
             # computing loss, metrics on test set
-            loss = loss_fn(output, target, mi_layer_weights, features)
+
+            if config['arch']['type'] == 'xMIEfficientNet':
+                loss, info_dict = loss_fn(output, target, mi_layer_weights, features)
+
+                for key, value in info_dict.items():
+                    if key not in individual_losses:
+                        individual_losses[key] = 0.0
+                    individual_losses[key] += value.item()
+            else:
+                loss = loss_fn(output, target)
+
             batch_size = data.shape[0]
             total_loss += loss.item() * batch_size
             for i, metric in enumerate(metric_fns):
                 total_metrics[i] += metric(output, target) * batch_size
 
     n_samples = len(data_loader.sampler)
+    
     log = {'loss': total_loss / n_samples}
+    log.update({key: value / n_samples for key, value in individual_losses.items()})
+
     log.update({
         met.__name__: total_metrics[i].item() / n_samples for i, met in enumerate(metric_fns)
     })
