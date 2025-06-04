@@ -53,8 +53,10 @@
         "args": {
             "w_entropy": 1.0,
             "w_mi": 0,
+            "w_ortho": 0.2,
             "w_cov": 0.8,
-            "w_l1": 0
+            "w_l1": 0,
+            "w_l2": 0.2
         }
     },
     "metrics": [
