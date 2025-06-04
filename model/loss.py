@@ -61,8 +61,8 @@ def l2_loss(features):
 
 #     return loss
 
-def ortho_loss(weights):
-    cov = torch.matmul(weights, weights.T)
+def ortho_loss(weights, type="row"):
+    cov = torch.matmul(weights, weights.T) if type == "row" else torch.matmul(weights.T, weights)
     id_matrix = torch.eye(cov.size(0), device=cov.device)
     loss = torch.norm(cov - id_matrix, p=2) ** 2
 
@@ -91,7 +91,7 @@ class XMILoss(nn.Module):
         loss_nll = F.nll_loss(output, target)
         loss_kl  = kl_loss(features)
         loss_cov = cov_loss(features)
-        loss_ortho = ortho_loss(mi_layer_weights)
+        loss_ortho = ortho_loss(mi_layer_weights,  type="column")
         loss_l1 = l1_loss(mi_layer_weights)
         loss_l2 = l2_loss(mi_layer_weights)
 
