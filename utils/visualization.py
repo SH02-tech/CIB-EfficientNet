@@ -1,7 +1,9 @@
 import re
 import numpy as np
+import math
 import matplotlib.pyplot as plt
 from scipy.ndimage import gaussian_filter1d
+from utils.torchmath import denormalize
 
 def plot_train_val(log_path):
 
@@ -58,3 +60,49 @@ def plot_train_val(log_path):
 	plt.grid(True)
 	plt.tight_layout()
 	plt.show()
+
+def show_batch_denormalized(list_tensors, mean, std, titles=None, num_cols=4, figsize=None):
+    """
+    Visualizes a batch of DENORMALIZED image tensors in a grid.
+    Args:
+        list_tensors (torch.Tensor): List of image tensors (C, H, W), ASSUMED NORMALIZED, with corresponding label
+        mean (list or tuple): Mean values used for normalization.
+        std (list or tuple): Standard deviation values used for normalization.
+        titles (list of str, optional): List of titles for each image.
+        num_cols (int): Number of columns in the grid.
+        figsize (tuple): Figure size (width, height).
+    """
+    batch_size = len(list_tensors)
+    num_rows = math.ceil(batch_size / num_cols)
+
+    fig, axes = plt.subplots(num_rows, num_cols, figsize=figsize)
+    axes = axes.flatten()
+
+    for i, (img_tensor, label) in enumerate(list_tensors):
+        ax = axes[i]
+        
+        # Denormalize the image tensor
+        denormalized_img_tensor = denormalize(img_tensor, mean, std)
+
+        # Convert to numpy and handle channel order
+        if denormalized_img_tensor.shape[0] == 1: # Grayscale
+            img_np = denormalized_img_tensor.squeeze().cpu().numpy()
+        else: # RGB
+            img_np = denormalized_img_tensor.permute(1, 2, 0).cpu().numpy()
+            
+        # Clip values to [0, 1] in case of floating point inaccuracies
+        img_np = np.clip(img_np, 0, 1)
+            
+        ax.imshow(img_np)
+        ax.axis('off')
+        ax.set_title("sample")
+        if titles and i < len(titles):
+            ax.set_title(titles[i])
+        else:
+            ax.set_title(f"Label: {label}")
+        
+    for j in range(i + 1, len(axes)):
+        axes[j].axis('off')
+
+    plt.tight_layout()
+    plt.show()
