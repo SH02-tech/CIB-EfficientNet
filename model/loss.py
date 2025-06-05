@@ -84,18 +84,12 @@ class XMILoss(nn.Module):
         self.w_l1 = w_l1
         self.w_l2 = w_l2
 
-    def forward(self, output, target, mi_layer_weights, features):
-        """
-        Number of input parameters done for consistency.
-
-        output. pair of (hotmap_predictions, features)
-        target. target hotmap_gt
-        """
+    def forward(self, output, target, weights, features):
         loss_nll = F.nll_loss(output, target)
         loss_cov = cov_loss(features)
-        loss_ortho = ortho_loss(mi_layer_weights,  type="row")
-        loss_l1 = l1_loss(mi_layer_weights)
-        loss_l2 = l2_loss(mi_layer_weights)
+        loss_ortho = ortho_loss(weights,  type="row")
+        loss_l1 = l1_loss(weights)
+        loss_l2 = l2_loss(weights)
 
         loss = self.w_entropy * loss_nll + \
             self.w_cov * loss_cov + self.w_ortho * loss_ortho + \
