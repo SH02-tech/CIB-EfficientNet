@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchvision.models import efficientnet_b2 as EfficientNetB2
 from torchvision.models import EfficientNet_B2_Weights
+from torchvision.models import vgg16_bn as VGG
 from base import BaseModel
 
 
@@ -77,6 +78,39 @@ class xMIEfficientNet(BaseModel):
 
         if output_features:
             weights = self.mi_layer[-1].weight if self.mi_layer is not None else self.features[-1][0].weight
+            return F.log_softmax(x, dim=1), weights, inter_features
+        else:
+            return F.log_softmax(x, dim=1)
+
+class xMIVGG(BaseModel):
+    def __init__(self, num_classes=7, vgg_weights: str = 'DEFAULT'):
+        super(xMIVGG, self).__init__()
+
+        # Previous model
+        base_model = VGG(weights=vgg_weights)
+
+        self.features = base_model.features
+        self.avgpool = base_model.avgpool
+
+        base_classifier = base_model.classifier
+        self.intermediate_layers = nn.Sequential(*base_classifier[:-1])
+        self.classifier = nn.Sequential(
+            nn.Linear(base_classifier[-1].in_features, num_classes)
+        )
+
+    def forward(self, x, output_features=False):
+        # from VGG
+        x = self.features(x)
+        x = self.avgpool(x)
+        x = torch.flatten(x, 1)
+        x = self.intermediate_layers(x)
+        inter_features = x
+
+        # Classifier
+        x = self.classifier(x)
+
+        if output_features:
+            weights = self.intermediate_layers[-3].weight
             return F.log_softmax(x, dim=1), weights, inter_features
         else:
             return F.log_softmax(x, dim=1)
