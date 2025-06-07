@@ -86,17 +86,19 @@ class XMILoss(nn.Module):
 
     def forward(self, output, target, weights, features):
         loss_nll = F.nll_loss(output, target)
+        loss_kl  = kl_loss(features)
         loss_cov = cov_loss(features)
         loss_ortho = ortho_loss(weights,  type="row")
         loss_l1 = l1_loss(weights)
         loss_l2 = l2_loss(weights)
 
-        loss = self.w_entropy * loss_nll + \
+        loss = self.w_entropy * loss_nll + self.w_mi * loss_kl + \
             self.w_cov * loss_cov + self.w_ortho * loss_ortho + \
             self.w_l1 * loss_l1 + self.w_l2 * loss_l2
 
         info_dict = {
             "nll_loss": loss_nll,
+            "kl_loss": loss_kl,
             "cov_loss": loss_cov,
             "ortho_loss": loss_ortho,
             "l1_loss": loss_l1,
