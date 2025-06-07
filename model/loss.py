@@ -85,12 +85,12 @@ class XMILoss(nn.Module):
         self.w_l2 = w_l2
 
     def forward(self, output, target, weights, features):
-        loss_nll = F.nll_loss(output, target) if self.w_entropy > 0 else torch.tensor(0.0, device=output.device)
-        loss_kl  = kl_loss(features) if self.w_mi > 0 else torch.tensor(0.0, device=output.device)
-        loss_cov = cov_loss(features) if self.w_cov > 0 else torch.tensor(0.0, device=output.device)
-        loss_ortho = ortho_loss(weights,  type="row") if self.w_ortho > 0 else torch.tensor(0.0, device=output.device)
-        loss_l1 = l1_loss(weights) if self.w_l1 > 0 else torch.tensor(0.0, device=output.device)
-        loss_l2 = l2_loss(weights) if self.w_l2 > 0 else torch.tensor(0.0, device=output.device)
+        loss_nll = F.nll_loss(output, target) if self.w_entropy != 0 else torch.tensor(0.0, device=output.device)
+        loss_kl  = kl_loss(features) if self.w_mi != 0 else torch.tensor(0.0, device=output.device)
+        loss_cov = cov_loss(features) if self.w_cov != 0 else torch.tensor(0.0, device=output.device)
+        loss_ortho = ortho_loss(weights,  type="row") if self.w_ortho != 0 else torch.tensor(0.0, device=output.device)
+        loss_l1 = l1_loss(weights) if self.w_l1 != 0 else torch.tensor(0.0, device=output.device)
+        loss_l2 = l2_loss(weights) if self.w_l2 != 0 else torch.tensor(0.0, device=output.device)
 
         loss = self.w_entropy * loss_nll + self.w_mi * loss_kl + \
             self.w_cov * loss_cov + self.w_ortho * loss_ortho + \
