@@ -4,6 +4,9 @@
 
     "arch": {
         "type": "xMIVGG",
+        "pretrained": {
+            "reduce_factor": 1
+        },
         "args": {
             "num_classes": 14,
             "vgg_weights": "IMAGENET1K_V1"
