@@ -21,9 +21,23 @@ np.random.seed(SEED)
 def main(config):
     logger = config.get_logger('train')
 
-    # setup data_loader instances
-    data_loader = config.init_obj('data_loader_train', module_data)
-    valid_data_loader = config.init_obj('data_loader_val', module_data)
+    # setup data_loader instances, depending on how data are splitted
+    if 'data_loader_train' in config.config and 'data_loader_val' in config.config:
+        data_loader = config.init_obj('data_loader_train', module_data)
+        valid_data_loader = config.init_obj('data_loader_val', module_data)
+    else:
+        data_loader = getattr(module_data, config['data_loader']['type'])(
+            config['data_loader']['args']['data_dir'],
+            split='train',
+            batch_size=config['data_loader']['args']['batch_size'],
+            shuffle=True
+        )
+
+        valid_data_loader = getattr(module_data, config['data_loader']['type'])(
+            config['data_loader']['args']['data_dir'],
+            split='val',
+            shuffle = False
+        )
 
     # build model architecture, then print to console
     model = config.init_obj('arch', module_arch)
