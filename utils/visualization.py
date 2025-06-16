@@ -5,11 +5,17 @@ import matplotlib.pyplot as plt
 from scipy.ndimage import gaussian_filter1d
 from utils.torchmath import denormalize
 
-def plot_train_val(log_path):
-
+def plot_train_val(log_path, save_file=None, y_label='Loss', title='Curva de aprendizaje', subloss_type=None, fontsize=20):
+	# Regex to match lines like: "epoch          : 1"
 	epoch_re = re.compile(r"epoch\s*:\s*(\d+)")
-	loss_re = re.compile(r"loss\s*:\s*([0-9\.eE+-]+)")
-	val_loss_re = re.compile(r"val_loss\s*:\s*([0-9\.eE+-]+)")
+	# Regex to match lines like: "loss           : 1.4490584661794264"
+	if subloss_type is None:
+		loss_re = re.compile(r"loss\s*:\s*([0-9\.eE+-]+)")
+		val_loss_re = re.compile(r"val_loss\s*:\s*([0-9\.eE+-]+)")
+	else:
+		# Match e.g. "loss/nll_loss  : 1.2839036902715995"
+		loss_re = re.compile(r"loss/{0}\s*:\s*([0-9\.eE+-]+)".format(re.escape(subloss_type)))
+		val_loss_re = re.compile(r"val_loss/{0}\s*:\s*([0-9\.eE+-]+)".format(re.escape(subloss_type)))
 
 	epochs = []
 	losses = []
@@ -18,15 +24,16 @@ def plot_train_val(log_path):
 	with open(log_path, "r") as f:
 		lines = f.readlines()
 
-	for i in range(len(lines)):
+	i = 0
+	while i < len(lines):
 		line = lines[i]
 		epoch_match = epoch_re.search(line)
 		if epoch_match:
 			epoch = int(epoch_match.group(1))
-			# Buscar las siguientes líneas para loss y val_loss
 			loss = None
 			val_loss = None
-			for j in range(1, 10):  # Buscar en las siguientes 10 líneas
+			# Search for loss and val_loss in the next 20 lines
+			for j in range(1, 20):
 				if i + j < len(lines):
 					l2 = lines[i + j]
 					if loss is None:
@@ -43,22 +50,31 @@ def plot_train_val(log_path):
 				epochs.append(epoch)
 				losses.append(loss)
 				val_losses.append(val_loss)
+		i += 1
 
-	# Suavizado con filtro gaussiano
+	if not epochs:
+		print("No epochs found in log.")
+		return
+
+	# Smooth with gaussian filter
 	losses_smooth = gaussian_filter1d(losses, sigma=1)
 	val_losses_smooth = gaussian_filter1d(val_losses, sigma=1)
 
-	plt.figure(figsize=(10,6))
+	plt.figure(figsize=(10, 6))
 	plt.plot(epochs, losses, 'o-', alpha=0.3, label="Loss (raw)", color='tab:blue')
 	plt.plot(epochs, losses_smooth, '-', linewidth=2, label="Loss (smoothed)", color='tab:blue')
 	plt.plot(epochs, val_losses, 'o-', alpha=0.3, label="Val Loss (raw)", color='tab:orange')
 	plt.plot(epochs, val_losses_smooth, '-', linewidth=2, label="Val Loss (smoothed)", color='tab:orange')
-	plt.xlabel("Época")
-	plt.ylabel("Loss")
-	plt.title("Entrenamiento/Validación")
-	plt.legend()
+	plt.xlabel("Época", fontsize=fontsize)
+	plt.ylabel(y_label, fontsize=fontsize)
+	plt.title(title, fontsize=fontsize)
+	plt.legend(fontsize=fontsize)
 	plt.grid(True)
+	plt.xticks(epochs, fontsize=fontsize)
 	plt.tight_layout()
+	if save_file:
+		plt.savefig(save_file, format='pdf')
+		print(f"Plot saved to {save_file}")
 	plt.show()
 
 def show_batch_denormalized(list_tensors, mean, std, titles=None, num_cols=4, figsize=None):
