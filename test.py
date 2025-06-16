@@ -8,8 +8,7 @@ import model.model as module_arch
 from parse_config import ConfigParser
 from utils.evaluation import evaluate
 
-
-def main(config):
+def main(config, output_file=None):
     logger = config.get_logger('test')
 
     # setup data_loader instances
@@ -71,17 +70,13 @@ def main(config):
 
     n_samples = len(data_loader.sampler)
 
-    eval_dict = evaluate(model, data_loader, device, verbose=True, num_shapes_per_class=1)
+    eval_dict = evaluate(model, data_loader, device, verbose=True, num_shapes_per_class=5)
     total_loss = eval_dict['loss']
 
-    log = {'loss': total_loss / n_samples}
-    # log.update({key: value / n_samples for key, value in individual_losses.items()})
+    # save eval dict to file
+    torch.save(eval_dict, output_file)
 
-    # log.update({
-    #     met.__name__: total_metrics[i].item() / n_samples for i, met in enumerate(metric_fns)
-    # })
-    logger.info(log)
-
+    print("Datos guardados en:", output_file)
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser(description='PyTorch Template')
@@ -91,6 +86,10 @@ if __name__ == '__main__':
                       help='path to latest checkpoint (default: None)')
     args.add_argument('-d', '--device', default=None, type=str,
                       help='indices of GPUs to enable (default: all)')
+    args.add_argument('--output_file', default=None, type=str,
+                      help='output file to save results (default: None)')
+
+    parsed = args.parse_args()
 
     config = ConfigParser.from_args(args)
-    main(config)
+    main(config, parsed.output_file)
