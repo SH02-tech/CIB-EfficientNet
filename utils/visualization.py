@@ -122,3 +122,25 @@ def show_batch_denormalized(list_tensors, mean, std, titles=None, num_cols=4, fi
 
     plt.tight_layout()
     plt.show()
+
+def show_hm(hm, img, save_path=None):
+	"""
+	Displays a heatmap overlay on the original image.
+	Args:
+		hm (torch.Tensor): The heatmap tensor (C, H, W).
+		img (torch.Tensor): The original image tensor (C, H, W).
+		save_path (str, optional): Path to save the figure.
+	"""
+	norm_hm = (hm - hm.min()) / (hm.max() - hm.min())
+	norm_hm = norm_hm.cpu().numpy()
+	norm_hm[norm_hm < 0.1] = 0 # clearer visualization
+
+	# Show heatmap
+	plt.figure(figsize=(6,6))
+	plt.imshow(img.permute(1, 2, 0).cpu().numpy(), alpha=0.9)
+	plt.imshow(norm_hm, cmap='hot', vmin=0, alpha=0.5)
+	plt.axis('off')
+	if save_path:
+		plt.savefig(save_path, format='pdf', bbox_inches='tight')
+	else:
+		plt.show()
