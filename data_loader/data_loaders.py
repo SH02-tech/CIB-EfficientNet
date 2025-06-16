@@ -110,7 +110,7 @@ class JacobMedDataset(Dataset):
                 self.data_files.extend(new_data_files)
             else:
                 # add subst of data files
-                num_elems = 300 if split == 'train' else 20
+                num_elems = 300 if split == 'train' else 15
                 self.data_files.extend(new_data_files[:num_elems])
 
         self.data_files.sort()
@@ -131,6 +131,9 @@ class JacobMedDataset(Dataset):
     def __len__(self):
         return len(self.data_files)
     
+    def get_idx_image(self, idx):
+        return self.data_files[idx]
+
     def __getitem__(self, idx):
         img_name = self.data_files[idx]
         image = read_image(img_name)
