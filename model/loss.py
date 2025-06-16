@@ -40,7 +40,7 @@ def cov_loss(features):
 
     # Compute the squared Frobenius norm of the difference
     decorr_loss = torch.norm(cov - id_matrix, p=2) ** 2
-    decorr_loss = decorr_loss - torch.norm(torch.diag(cov), p=2) ** 2
+    decorr_loss = decorr_loss - torch.norm(torch.diag(cov - id_matrix), p=2) ** 2
 
     return decorr_loss
 
