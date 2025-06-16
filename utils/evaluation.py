@@ -41,20 +41,15 @@ def evaluate(model, dataloader, device, verbose: bool = True, num_shapes_per_cla
 				class_correct[int(label)] += (preds[label_mask] == label).sum().item()
 				class_total[int(label)] += label_mask.sum().item()
 
-	# Compute heatmaps for a subsample of 5 images per category
-
-	if verbose:
-		print("Computing heatmaps for a subsample...")
-
-	category_samples = defaultdict(list)
-	img_names = []
+	category_samples = {label: [] for label in range(14)}
+	images_info = []
 
 	for idx in range(len(dataloader.dataset)):
 		img, label = dataloader.dataset[idx]
 		img_name = dataloader.dataset.get_idx_image(idx)
 		if len(category_samples[label]) < num_shapes_per_class:
 			category_samples[label].append((img, label))
-			img_names.append(img_name)
+			images_info.append((img_name, img))
 		if all(len(samples) == num_shapes_per_class for samples in category_samples.values()):
 			break
 
@@ -65,6 +60,12 @@ def evaluate(model, dataloader, device, verbose: bool = True, num_shapes_per_cla
 
 	zennit_handler = ZennitHandler(model)
 	layer_name = 'mi_layer.1' if type(model).__name__ == 'xMIEfficientNet' else 'features.8.0'
+
+	# Compute heatmaps for a subsample of 5 images per category
+
+	if verbose:
+		print("Computing heatmaps for a subsample...")
+
 
 	for label, samples in category_samples.items():
 		for img, target in samples:
@@ -80,9 +81,24 @@ def evaluate(model, dataloader, device, verbose: bool = True, num_shapes_per_cla
 				kl_div_per_k[k].append(kl)
 				euclid_per_k[k].append(euclid)
 
+	mean_euclid = 0.0
+	euclid_values = []
 	for k in range(2, 11):
-		total_kl_div_dict[k] = float(torch.tensor(kl_div_per_k[k]).mean()) if kl_div_per_k[k] else 0.0
-		total_euclid_dict[k] = float(torch.tensor(euclid_per_k[k]).mean()) if euclid_per_k[k] else 0.0
+		if euclid_per_k[k]:
+			mean_k = float(torch.tensor(euclid_per_k[k]).mean())
+			total_euclid_dict[k] = mean_k
+			euclid_values.extend(euclid_per_k[k])
+		else:
+			total_euclid_dict[k] = 0.0
+		if kl_div_per_k[k]:
+			total_kl_div_dict[k] = float(torch.tensor(kl_div_per_k[k]).mean())
+		else:
+			total_kl_div_dict[k] = 0.0
+
+	if euclid_values:
+		mean_euclid = float(torch.tensor(euclid_values).mean())
+	else:
+		mean_euclid = 0.0
 
 	# Compute per-class accuracy
 	per_class_accuracy = {}
@@ -98,7 +114,8 @@ def evaluate(model, dataloader, device, verbose: bool = True, num_shapes_per_cla
 		'loss': total_loss,
 		'kl_divergence': total_kl_div_dict,
 		'euclidean_distance': total_euclid_dict,
+		'mean_euclidean_distance': mean_euclid,
 		'heatmaps': total_heatmaps,
 		'relevances': relevances,
-		'image_names': img_names,
+		'images_info': images_info
 	}

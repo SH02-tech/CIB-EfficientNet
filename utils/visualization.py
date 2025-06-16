@@ -1,6 +1,7 @@
 import re
 import numpy as np
 import math
+import torch
 import matplotlib.pyplot as plt
 from scipy.ndimage import gaussian_filter1d
 from utils.torchmath import denormalize
@@ -125,15 +126,17 @@ def show_batch_denormalized(list_tensors, mean, std, titles=None, num_cols=4, fi
 
 def show_hm(hm, img, save_path=None):
 	"""
-	Displays a heatmap overlay on the original image.
+	Displays a heatmap overlay on the original image. Save the figure if 
+	save_path is provided.
 	Args:
 		hm (torch.Tensor): The heatmap tensor (C, H, W).
 		img (torch.Tensor): The original image tensor (C, H, W).
 		save_path (str, optional): Path to save the figure.
 	"""
 	norm_hm = (hm - hm.min()) / (hm.max() - hm.min())
+	threshold = torch.quantile(norm_hm, 0.9).item()
 	norm_hm = norm_hm.cpu().numpy()
-	norm_hm[norm_hm < 0.1] = 0 # clearer visualization
+	norm_hm[norm_hm < threshold] = 0 # clearer visualization
 
 	# Show heatmap
 	plt.figure(figsize=(6,6))
@@ -141,6 +144,7 @@ def show_hm(hm, img, save_path=None):
 	plt.imshow(norm_hm, cmap='hot', vmin=0, alpha=0.5)
 	plt.axis('off')
 	if save_path:
-		plt.savefig(save_path, format='pdf', bbox_inches='tight')
+		plt.savefig(save_path)
+		plt.close()
 	else:
 		plt.show()

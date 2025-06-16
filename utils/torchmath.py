@@ -121,7 +121,7 @@ class ZennitHandler:
         self.cc = ChannelConcept()
         
 
-    def get_heatmap_top(self, input_tensor, target_layer, label, k=5):
+    def get_attr_top(self, input_tensor, target_layer, label, k=5):
         input_zennit = input_tensor.clone().detach()
         input_zennit = input_zennit.unsqueeze(0)
         input_zennit.requires_grad = True
@@ -134,6 +134,7 @@ class ZennitHandler:
 
         conditions = [{target_layer: [id], 'y': [label]} for id in concept_ids]
 
-        heatmap, _, _, _ = self.attribution(input_zennit, conditions, self.composite)
+        attr_refined = self.attribution(input_zennit, conditions, self.composite)
+        rel_c_refined = self.cc.attribute(attr_refined.relevances[target_layer], abs_norm=True)
 
-        return heatmap
+        return attr_refined, rel_c_refined
