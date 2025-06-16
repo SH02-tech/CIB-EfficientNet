@@ -38,7 +38,9 @@ def cov_loss(features):
 
     id_matrix = torch.eye(cov.size(0), device = cov.device)
 
+    # Compute the squared Frobenius norm of the difference
     decorr_loss = torch.norm(cov - id_matrix, p=2) ** 2
+    decorr_loss = decorr_loss - torch.norm(torch.diag(cov), p=2) ** 2
 
     return decorr_loss
 
