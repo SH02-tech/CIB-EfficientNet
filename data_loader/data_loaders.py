@@ -97,21 +97,13 @@ class JacobMedDataset(Dataset):
             self.data_dict = {x.strip(): idx for idx, x in enumerate(classes)}
 
         # get data, depending on split
-        split_data = os.path.join(data_dir, split)
+        if reduced_set:
+            split_file = os.path.join(data_dir, f"{split}_reduced.txt")
+        else:
+            split_file = os.path.join(data_dir, f"{split}.txt")
 
-        # get all data files
-        for field in self.data_dict.keys():
-            field_dir = os.path.join(split_data, field)
-            new_data_files = []
-            for file in os.listdir(field_dir):
-                if file.endswith('.png'):
-                    new_data_files.append(os.path.join(field_dir, file))
-            if not reduced_set:
-                self.data_files.extend(new_data_files)
-            else:
-                # add subst of data files
-                num_elems = 300 if split == 'train' else 15
-                self.data_files.extend(new_data_files[:num_elems])
+        with open(split_file, 'r') as f:
+            self.data_files = [os.path.join(data_dir, line.strip()) for line in f if line.strip()]
 
         self.data_files.sort()
 

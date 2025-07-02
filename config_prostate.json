@@ -17,7 +17,7 @@
         "args": {
             "data_dir": "data/JacobMed",
             "split": "train",
-            "reduced_set": true,
+            "reduced_set": false,
             "batch_size": 32,
             "num_workers": 4
         }
@@ -27,7 +27,7 @@
         "args": {
             "data_dir": "data/JacobMed",
             "split": "val",
-            "reduced_set": true,
+            "reduced_set": false,
             "batch_size": 32,
             "num_workers": 4
         }
@@ -37,7 +37,7 @@
         "args": {
             "data_dir": "data/JacobMed",
             "split": "test",
-            "reduced_set": true,
+            "reduced_set": false,
             "batch_size": 32,
             "num_workers": 4
         }
