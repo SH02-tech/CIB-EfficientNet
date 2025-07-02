@@ -1,0 +1,14 @@
+Adenocarcinoma_ductal
+Carcinoma_intraductal
+Estroma
+Glandulas_no_neoplasicas
+Gleason_3
+Gleason_4_cribiformes
+Gleason_4_fusionadas
+Gleason_4_glomeruloide
+Gleason_4_pobremente_formadas
+Gleason_5_comedonecrosis
+Gleason_5_no_glandulas
+Inflamatorio
+No_Cancer
+PIN_de_alto_grado
