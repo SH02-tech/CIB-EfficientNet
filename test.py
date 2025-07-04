@@ -7,9 +7,15 @@ import model.metric as module_metric
 import model.model as module_arch
 from parse_config import ConfigParser
 from utils.evaluation import evaluate
+import os
 
 def main(config, output_file=None):
     logger = config.get_logger('test')
+
+    # if output file not specified, use the default path inside config directory
+    if output_file is None:
+        base_path = os.path.dirname(config.resume)
+        output_file = os.path.join(base_path, "test_dict.pth")
 
     # setup data_loader instances
     data_loader = config.init_obj('data_loader_test', module_data)
@@ -68,15 +74,18 @@ def main(config, output_file=None):
     #         for i, metric in enumerate(metric_fns):
     #             total_metrics[i] += metric(output, target) * batch_size
 
-    n_samples = len(data_loader.sampler)
-
     eval_dict = evaluate(model, data_loader, device, verbose=True, num_shapes_per_class=5)
-    total_loss = eval_dict['loss']
 
     # save eval dict to file
     torch.save(eval_dict, output_file)
 
+    total_loss = eval_dict['loss']
+    accuracy = eval_dict['accuracy']
+
     print("Datos guardados en:", output_file)
+    print("Total Loss:", total_loss)
+    print("Accuracy:", accuracy)
+    
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser(description='PyTorch Template')
