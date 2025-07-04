@@ -14,13 +14,17 @@ TMP_DIR="tmp/tensorboard_visualization"
 printf "Starting TensorBoard for the last %s executions in %s\n" "$NUM_EXECS" "$ROOT_DIR"
 
 # get last N executions for each subfolder (each subfolder has folders which are the runs)
-last_execs=$(find "$ROOT_DIR" -mindepth 2 -maxdepth 2 -type d | \
+last_execs=$(find "$ROOT_DIR" -mindepth 1 -maxdepth 1 -type d | \
 	awk -F/ '{print $(NF-1) "/" $NF}' | \
 	sort -t/ -k1,1 -k2,2r | \
 	awk -F/ '{
 		count[$1]++
-		if (count[$1] <= NUM_EXECS) print "'"$ROOT_DIR"'/"$1"/"$2
+		if (count[$1] <= NUM_EXECS) print "'"$ROOT_DIR"'/"$2
 	}' NUM_EXECS="$NUM_EXECS")
+	# awk -F/ '{
+	# 	count[$1]++
+	# 	if (count[$1] <= NUM_EXECS) print "'"$ROOT_DIR"'/"$1"/"$2
+	# }' NUM_EXECS="$NUM_EXECS")
 
 printf "Found %d runs:\n" "$(echo "$last_execs" | wc -l)"
 
