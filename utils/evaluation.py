@@ -4,7 +4,7 @@ from collections import defaultdict
 import model.metric as module_metric
 
 
-def evaluate(model, dataloader, device, verbose: bool = True, num_shapes_per_class: int = 5):
+def evaluate(model, dataloader, device, verbose: bool = True, num_shapes_per_class: int = 5, bottleneck_layer: bool = False):
 
 	total_loss = 0.0
 	total_accuracy = 0.0
@@ -59,7 +59,7 @@ def evaluate(model, dataloader, device, verbose: bool = True, num_shapes_per_cla
 	relevances = []
 
 	zennit_handler = ZennitHandler(model)
-	layer_name = 'mi_layer.1' if type(model).__name__ == 'xMIEfficientNet' else 'features.8.0'
+	layer_name = 'mi_layer.1' if bottleneck_layer else 'features.8.0'
 
 	# Compute heatmaps for a subsample of 5 images per category
 
