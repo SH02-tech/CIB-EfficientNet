@@ -1,34 +1,54 @@
 #!/bin/bash
-# This script runs TensorBoard on the last 5 training runs in a specified folder
+# This script runs TensorBoard on the last N training runs in specified folders
 # for each model.
 
-if [[ $# -ne 2 ]]; then
-  echo "Usage: $0 <root_dir> <num_execs>"
+if [[ $# -lt 2 ]]; then
+  echo "Usage: $0 <num_execs> <root_dir1> [root_dir2] [root_dir3] ..."
+  echo "  num_execs: Number of recent executions to include per model"
+  echo "  root_dir*: One or more root directories containing training runs"
   exit 1
 fi
 
-ROOT_DIR=$1
-NUM_EXECS=$2
+NUM_EXECS=$1
+shift  # Remove first argument, remaining args are root directories
+ROOT_DIRS=("$@")
+ROOT_DIRS=("$@")
 TMP_DIR="tmp/tensorboard_visualization"
 
-printf "Starting TensorBoard for the last %s executions in %s\n" "$NUM_EXECS" "$ROOT_DIR"
+printf "Starting TensorBoard for the last %s executions in %d directories\n" "$NUM_EXECS" "${#ROOT_DIRS[@]}"
 
-# get last N executions for each subfolder (each subfolder has folders which are the runs)
-last_execs=$(find "$ROOT_DIR" -mindepth 1 -maxdepth 1 -type d | \
-	awk -F/ '{print $(NF-1) "/" $NF}' | \
-	sort -t/ -k1,1 -k2,2r | \
-	awk -F/ '{
-		count[$1]++
-		if (count[$1] <= NUM_EXECS) print "'"$ROOT_DIR"'/"$2
-	}' NUM_EXECS="$NUM_EXECS")
-	# awk -F/ '{
-	# 	count[$1]++
-	# 	if (count[$1] <= NUM_EXECS) print "'"$ROOT_DIR"'/"$1"/"$2
-	# }' NUM_EXECS="$NUM_EXECS")
+# Process each root directory
+all_execs=""
+for ROOT_DIR in "${ROOT_DIRS[@]}"; do
+  if [[ ! -d "$ROOT_DIR" ]]; then
+    echo "Warning: Directory $ROOT_DIR does not exist, skipping..."
+    continue
+  fi
+  
+  printf "Processing directory: %s\n" "$ROOT_DIR"
+  
+  # get last N executions for each subfolder (each subfolder has folders which are the runs)
+  last_execs=$(find "$ROOT_DIR" -mindepth 1 -maxdepth 1 -type d | \
+    awk -F/ '{print $(NF-1) "/" $NF}' | \
+    sort -t/ -k1,1 -k2,2r | \
+    awk -F/ '{
+      count[$1]++
+      if (count[$1] <= NUM_EXECS) print "'"$ROOT_DIR"'/"$2
+    }' NUM_EXECS="$NUM_EXECS")
+  
+  # Append to all_execs
+  if [[ -n "$last_execs" ]]; then
+    if [[ -z "$all_execs" ]]; then
+      all_execs="$last_execs"
+    else
+      all_execs="$all_execs"$'\n'"$last_execs"
+    fi
+  fi
+done
 
-printf "Found %d runs:\n" "$(echo "$last_execs" | wc -l)"
+printf "Found %d total runs:\n" "$(echo "$all_execs" | wc -l)"
 
-echo "$last_execs" | while read -r run; do
+echo "$all_execs" | while read -r run; do
   config_file="${run/log/models}/config.json"
   log_file="$run/info.log"
   echo " - $run"
@@ -47,7 +67,7 @@ fi
 
 echo "Created temporary directory $TMP_DIR"
 
-echo "$last_execs" | while read -r run; do
+echo "$all_execs" | while read -r run; do
 	parent_dir="$(basename "$(dirname "$run")")"
 	run_dir="$(basename "$run")"
 	target_dir="$TMP_DIR/$parent_dir"
