@@ -29,7 +29,7 @@ class fCRPEfficientNet(BaseModel):
         return F.log_softmax(x, dim=1)
 
 class xMIEfficientNet(BaseModel):
-    def __init__(self, num_classes=7, n_mi_layer = 0, fcrp_weights: str = None):
+    def __init__(self, num_classes=7, n_mi_layer = 0, use_inter_layers: bool = False, fcrp_weights: str = None):
         super(xMIEfficientNet, self).__init__()
 
         # Previous model
@@ -49,12 +49,23 @@ class xMIEfficientNet(BaseModel):
         self.avgpool = pre_model.avgpool
 
         if n_mi_layer > 0:
-            self.mi_layer = nn.Sequential(
-                nn.Dropout(p=0.3, inplace=True),
-                nn.Linear(last_features_size, n_mi_layer),
-            )
-
-            pre_classifier[-1] = nn.Linear(n_mi_layer, num_classes)
+            if not use_inter_layers:
+                self.mi_layer = nn.Sequential(
+                    nn.Dropout(p=0.3, inplace=True),
+                    nn.Linear(last_features_size, n_mi_layer),
+                )
+                pre_classifier[-1] = nn.Linear(n_mi_layer, num_classes)
+            else:
+                self.mi_layer = nn.Sequential(
+                    # adapted from Koh et al. (2020)
+                    nn.Dropout(p=0.3, inplace=True),
+                    nn.Linear(last_features_size, n_mi_layer),
+                    nn.ReLU(inplace=True),
+                    nn.Linear(n_mi_layer, 50),
+                    nn.ReLU(inplace=True),
+                    nn.Linear(50, 50)
+                )
+                pre_classifier[-1] = nn.Linear(50, num_classes)
         else:
             self.mi_layer = None
 
@@ -77,7 +88,7 @@ class xMIEfficientNet(BaseModel):
         x = self.classifier(x)
 
         if output_features:
-            weights = self.mi_layer[-1].weight if self.mi_layer is not None else self.features[-1][0].weight
+            weights = self.mi_layer[1].weight if self.mi_layer is not None else self.features[-1][0].weight
             return F.log_softmax(x, dim=1), weights, inter_features
         else:
             return F.log_softmax(x, dim=1)

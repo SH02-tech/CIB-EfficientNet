@@ -9,7 +9,8 @@
         },
         "args": {
             "num_classes": 14,
-            "fcrp_weights": "saved/models/fCRP-prostate-reduced/0703_222008/model_best.pth"
+            "fcrp_weights": "saved/models/fCRP-prostate-reduced/0703_222008/model_best.pth",
+            "use_inter_layers": true
         }
     },
     "data_loader_train": {
