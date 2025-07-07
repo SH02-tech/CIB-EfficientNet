@@ -3,8 +3,62 @@ from utils.torchmath import ZennitHandler
 from collections import defaultdict
 import model.metric as module_metric
 
+def evaluate(model, dataloader, device, verbose: bool = True, num_shapes_per_class: int = 5):
+	"""
+	Evaluate the model on the given dataloader.
 
-def evaluate(model, dataloader, device, verbose: bool = True, num_shapes_per_class: int = 5, bottleneck_layer: bool = False):
+	Args:
+		model: The model to evaluate.
+		dataloader: The dataloader containing the dataset.
+		device: The device to run the evaluation on.
+		verbose: If True, print evaluation progress.
+		num_shapes_per_class: Number of shapes to sample per class for heatmap
+		computation.
+
+	Returns:
+		A dictionary containing the evaluation metrics:
+			- 'accuracy': Overall accuracy of the model.
+			- 'per_class_accuracy': Dictionary with per-class accuracy.
+			- 'loss': Total loss over the dataset.
+			- 'kl_divergence': Dictionary with KL divergence for each k.
+			- 'euclidean_distance': Dictionary with Euclidean distance for each k.
+			- 'mean_euclidean_distance': Mean Euclidean distance across all k.
+			- 'heatmaps': List of heatmaps computed for the sampled images.
+			- 'relevances': List of relevance scores for the sampled images.
+			- 'images_info': List of tuples containing image names and images.
+
+		If the model is an xMI-EfficientNet, it will also compute heatmaps
+		from the bottleneck layer and add them to the dictionary with keys
+		suffixed with '_bottleneck'.
+	"""
+	dict = evaluate_individual(
+		model, 
+		dataloader, 
+		device, 
+		verbose=verbose, 
+		num_shapes_per_class=num_shapes_per_class,
+		bottleneck_layer=False
+	)
+
+	if 'xMIEfficient' in type(model).__name__:
+		dict_bottleneck = evaluate_individual(
+			model, 
+			dataloader, 
+			device, 
+			verbose=verbose, 
+			num_shapes_per_class=num_shapes_per_class,
+			bottleneck_layer=True
+		)
+	
+		for key in dict_bottleneck:
+			if key in dict:
+				dict[key + '_bottleneck'] = dict_bottleneck[key]
+			else:
+				dict[key] = dict_bottleneck[key]
+
+	return dict
+
+def evaluate_individual(model, dataloader, device, verbose: bool = True, num_shapes_per_class: int = 5, bottleneck_layer: bool = False):
 
 	total_loss = 0.0
 	total_accuracy = 0.0

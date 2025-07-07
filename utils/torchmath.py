@@ -137,4 +137,4 @@ class ZennitHandler:
         attr_refined = self.attribution(input_zennit, conditions, self.composite)
         rel_c_refined = self.cc.attribute(attr_refined.relevances[target_layer], abs_norm=True)
 
-        return attr_refined, rel_c_refined
+        return attr_refined, rel_c
