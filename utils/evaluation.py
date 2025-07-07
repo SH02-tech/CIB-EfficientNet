@@ -41,6 +41,7 @@ def evaluate(model, dataloader, device, verbose: bool = True, num_shapes_per_cla
 	)
 
 	if 'xMIEfficient' in type(model).__name__:
+		print("Computing heatmaps from bottleneck layer...")
 		dict_bottleneck = evaluate_individual(
 			model, 
 			dataloader, 
@@ -109,6 +110,7 @@ def evaluate_individual(model, dataloader, device, verbose: bool = True, num_sha
 
 	kl_div_per_k = defaultdict(list)
 	euclid_per_k = defaultdict(list)
+	# mi_per_k = defaultdict(list)
 	total_heatmaps = []
 	relevances = []
 
@@ -132,11 +134,14 @@ def evaluate_individual(model, dataloader, device, verbose: bool = True, num_sha
 			for k in range(2, 11):
 				kl = module_metric.kl_divergence_hm(norm_heatmap, k)
 				euclid = module_metric.euclidean_distance_hm(norm_heatmap, k)
+				# mi = module_metric.mi_hm(norm_heatmap, k)
 				kl_div_per_k[k].append(kl)
 				euclid_per_k[k].append(euclid)
+				# mi_per_k[k].append(mi)
 
 	mean_euclid = 0.0
 	euclid_values = []
+	# total_mi_dict = {}
 	for k in range(2, 11):
 		if euclid_per_k[k]:
 			mean_k = float(torch.tensor(euclid_per_k[k]).mean())
@@ -148,6 +153,10 @@ def evaluate_individual(model, dataloader, device, verbose: bool = True, num_sha
 			total_kl_div_dict[k] = float(torch.tensor(kl_div_per_k[k]).mean())
 		else:
 			total_kl_div_dict[k] = 0.0
+		# if mi_per_k[k]:
+		# 	total_mi_dict[k] = float(torch.tensor(mi_per_k[k]).mean())
+		# else:
+		# 	total_mi_dict[k] = 0.0
 
 	if euclid_values:
 		mean_euclid = float(torch.tensor(euclid_values).mean())
@@ -168,6 +177,7 @@ def evaluate_individual(model, dataloader, device, verbose: bool = True, num_sha
 		'loss': total_loss,
 		'kl_divergence': total_kl_div_dict,
 		'euclidean_distance': total_euclid_dict,
+		# 'mutual_information': total_mi_dict,
 		'mean_euclidean_distance': mean_euclid,
 		'heatmaps': total_heatmaps,
 		'relevances': relevances,

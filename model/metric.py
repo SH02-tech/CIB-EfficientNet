@@ -44,11 +44,14 @@ def _heatmaps_pair_apply_fn(heatmaps, fn, flatten:bool = False):
             heatmaps = heatmaps.reshape(n, -1)
         
         dists = []
+        num_evaluations = (n * (n-1)) // 2  # Number of unique pairs
+
         for i in range(n):
             for j in range(i + 1, n):
                 dist = fn(heatmaps[i], heatmaps[j])
                 dists.append(dist)
-        return sum(dists) / len(dists) if dists else 0.0
+
+        return sum(dists) / num_evaluations if num_evaluations > 0 else 0.0
 
 
 def euclidean_distance_hm(heatmaps, k:int = 2):
@@ -63,13 +66,13 @@ def euclidean_distance_hm(heatmaps, k:int = 2):
     metric = _heatmaps_pair_apply_fn(heatmaps[:k], euclidean_distance, flatten=True)
     return metric
 
-def kl_divergence(output, target, eps:float = 1e-10):
+def kl_divergence(output, target):
     with torch.no_grad():
         assert output.shape == target.shape
-        output = output / (output.sum(dim=0, keepdim=True) + eps)  # Normalize output
-        target = target / (target.sum(dim=0, keepdim=True) + eps)  # Normalize target
+        output = torch.log_softmax(output, dim = 0)
+        target = torch.log_softmax(target, dim = 0)
 
-        kl_div = torch.nn.functional.kl_div(torch.log(output + eps), target + eps, reduction='mean')
+        kl_div = torch.nn.functional.kl_div(output, target, log_target = True, reduction='mean')
         return kl_div.item()
 
 def kl_divergence_hm(heatmaps, k:int = 2):
@@ -81,7 +84,7 @@ def kl_divergence_hm(heatmaps, k:int = 2):
     Returns:
         float: Mean KL divergence between all pairs.
     """
-    metric = _heatmaps_pair_apply_fn(heatmaps[:k], kl_divergence)
+    metric = _heatmaps_pair_apply_fn(heatmaps[:k], kl_divergence, flatten = True)
     return metric
 
 def mi_hm(heatmaps, k:int = 2):
@@ -99,7 +102,7 @@ def mi_hm(heatmaps, k:int = 2):
     if isinstance(heatmaps_k, torch.Tensor):
         heatmaps_k = heatmaps_k.cpu().numpy()
 
-    metric = _heatmaps_pair_apply_fn(heatmaps_k, mutual_info_score) 
+    metric = _heatmaps_pair_apply_fn(heatmaps_k, mutual_info_score, flatten=True) 
     return metric
 
 def wasserstein_hm(heatmaps, k:int = 2):
