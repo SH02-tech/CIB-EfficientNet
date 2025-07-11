@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from scipy.ndimage import gaussian_filter1d
 from utils.torchmath import denormalize
 
-def plot_train_val(log_path, save_file=None, y_label='Loss', title='Curva de aprendizaje', subloss_type=None, fontsize=20):
+def plot_train_val(log_path, save_file=None, y_label='Loss', title='Curva de aprendizaje', subloss_type=None, fontsize=20, smooth=False, sigma=1):
 	# Regex to match lines like: "epoch          : 1"
 	epoch_re = re.compile(r"epoch\s*:\s*(\d+)")
 	# Regex to match lines like: "loss           : 1.4490584661794264"
@@ -21,7 +21,6 @@ def plot_train_val(log_path, save_file=None, y_label='Loss', title='Curva de apr
 	epochs = []
 	losses = []
 	val_losses = []
-
 	with open(log_path, "r") as f:
 		lines = f.readlines()
 
@@ -57,21 +56,30 @@ def plot_train_val(log_path, save_file=None, y_label='Loss', title='Curva de apr
 		print("No epochs found in log.")
 		return
 
-	# Smooth with gaussian filter
-	losses_smooth = gaussian_filter1d(losses, sigma=1)
-	val_losses_smooth = gaussian_filter1d(val_losses, sigma=1)
-
 	plt.figure(figsize=(10, 6))
-	plt.plot(epochs, losses, 'o-', alpha=0.3, label="Loss (raw)", color='tab:blue')
-	plt.plot(epochs, losses_smooth, '-', linewidth=2, label="Loss (smoothed)", color='tab:blue')
-	plt.plot(epochs, val_losses, 'o-', alpha=0.3, label="Val Loss (raw)", color='tab:orange')
-	plt.plot(epochs, val_losses_smooth, '-', linewidth=2, label="Val Loss (smoothed)", color='tab:orange')
+	
+	if smooth:
+		# Smooth with gaussian filter
+		losses_smooth = gaussian_filter1d(losses, sigma=sigma)
+		val_losses_smooth = gaussian_filter1d(val_losses, sigma=sigma)
+		
+		plt.plot(epochs, losses, 'o-', alpha=0.3, label="Loss (raw)", color='tab:blue')
+		plt.plot(epochs, losses_smooth, '-', linewidth=2, label="Loss (smoothed)", color='tab:blue')
+		plt.plot(epochs, val_losses, 'o-', alpha=0.3, label="Val Loss (raw)", color='tab:orange')
+		plt.plot(epochs, val_losses_smooth, '-', linewidth=2, label="Val Loss (smoothed)", color='tab:orange')
+	else:
+		# Plot only raw data
+		plt.plot(epochs, losses, 'o-', label="Loss", color='tab:blue')
+		plt.plot(epochs, val_losses, 'o-', label="Val Loss", color='tab:orange')
 	plt.xlabel("Época", fontsize=fontsize)
 	plt.ylabel(y_label, fontsize=fontsize)
 	plt.title(title, fontsize=fontsize)
 	plt.legend(fontsize=fontsize)
-	plt.grid(True)
-	plt.xticks(epochs, fontsize=fontsize)
+	# plt.grid(True)
+	# Set x-ticks every 5 epochs starting from 5 for clarity
+	xtick_epochs = [e for e in epochs if e % 5 == 0 and e >= 5]
+	plt.xticks(xtick_epochs, fontsize=fontsize)
+	plt.xlim(left=0)
 	plt.tight_layout()
 	if save_file:
 		plt.savefig(save_file, format='pdf')
