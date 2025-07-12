@@ -76,9 +76,10 @@ def plot_train_val(log_path, save_file=None, y_label='Loss', title='Curva de apr
 	plt.title(title, fontsize=fontsize)
 	plt.legend(fontsize=fontsize)
 	# plt.grid(True)
-	# Set x-ticks every 5 epochs starting from 5 for clarity
-	xtick_epochs = [e for e in epochs if e % 5 == 0 and e >= 5]
+	# Set x-ticks every 10 epochs starting from 10 for clarity
+	xtick_epochs = [e for e in epochs if e % 10 == 0 and e >= 10]
 	plt.xticks(xtick_epochs, fontsize=fontsize)
+	plt.yticks(fontsize=fontsize)
 	plt.xlim(left=0)
 	plt.tight_layout()
 	if save_file:
