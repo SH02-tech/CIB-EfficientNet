@@ -4,6 +4,24 @@ In this repository we implement CIB-EfficientNet (Concise Information in
 Bottleneck EfficientNet). CIB is method used to increase explainability
 presented in this Bachelor's Thesis (TBA). 
 
+## Table of Contents
+
+- [CIB-EfficientNet](#cib-efficientnet)
+  - [Table of Contents](#table-of-contents)
+  - [Project Structure](#project-structure)
+  - [Setup](#setup)
+    - [Prerequisites](#prerequisites)
+    - [Installation](#installation)
+  - [Usage](#usage)
+    - [Training](#training)
+    - [Testing](#testing)
+    - [Notebooks](#notebooks)
+  - [Configuration](#configuration)
+  - [Data Structure](#data-structure)
+  - [Scripts](#scripts)
+  - [License](#license)
+  - [Contributing](#contributing)
+
 ## Project Structure
 
 This repo presents this structure:
