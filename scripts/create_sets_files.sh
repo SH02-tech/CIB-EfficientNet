@@ -34,7 +34,7 @@ val_test_count=0
 > "$VAL_FILE"
 > "$TEST_FILE"
 
-# Create the train.txt file
+# Create the train.txt and val.txt files
 
 for class_dir in "$DATASET_DIR"/train/*; do
 	class_name=$(basename "$class_dir")

@@ -1,4 +1,5 @@
 #!/bin/bash
+# This script removes empty executions from tensorboard.
 
 BASE_DIR="saved/models"
 LOG_DIR="saved/log"
